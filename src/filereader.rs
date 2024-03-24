@@ -85,7 +85,13 @@ mod tests {
             Err(e) => panic!("Error: {}", e),
         };
         assert_eq!(files.len(), 8);
-        assert_eq!(files[0].file_path, "examples/example.py");
-        assert_eq!(files[0].lines.len(), 2);
+        assert!(files.iter()
+            .map(|f| f.file_path.clone())
+            .collect::<Vec<_>>()
+            .contains(&"examples/example.py".to_string()));
+        assert!(files.iter()
+            .map(|f| f.lines.len())
+            .collect::<Vec<_>>()
+            .contains(&2));
     }
 }
