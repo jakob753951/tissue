@@ -24,7 +24,6 @@ mod tests {
                     date: issuer.date,
                 };
                 submissions.push(submission);
-                
             }
         }
         let todos = submissions.iter()
