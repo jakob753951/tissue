@@ -45,22 +45,7 @@ pub fn is_to_do(line: &str) -> bool {
 // TODO bug: this function is not implemented; Assigned OthelloEngineer.
 // TODO feature: implement this function; Assigned OthelloEngineer.
 pub fn parse_submission(submission: Submission) -> Result<ToDo, String> {
-    let re = RegexBuilder::new(r"
-    \s*                                 # \s means whitespace and * is any amount of
-    todo\s+(?<type>\w+):                # matches 'todo bug:'
-    \s*
-    (                                   # needed to make OR operator work properly
-        (?<description_no_assigned>.+)
-        |                               # OR operator
-        (?<description>.+)
-        ;
-        \s*
-        assigned                        # literal 'assigned'
-        \s+                             # a non-zero amount of whitespace (must be space between assigned literal and the user)
-        (?<assigned>[a-zA-Z0-9_-]+)     # the username should be alphanumeric plus underscores and dashes
-        .*
-    )
-    ")
+    let re = RegexBuilder::new(r"\s*todo\s+(?<type>\w+):\s*((?<description_no_assigned>.+)|(?<description>.+);\s*assigned\s+(?<assigned>[a-zA-Z0-9_-]+).*)")
         .case_insensitive(true)
         .ignore_whitespace(true)
         .build().unwrap();
