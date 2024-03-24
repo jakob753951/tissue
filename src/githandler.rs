@@ -37,6 +37,8 @@ pub fn get_current_user() -> Result<String, Error> {
 }
 
 pub fn blame_user_from_line(file_path: &str, line_number: usize) -> Result<BlameEntry, Error> {
+    let location = format!("{},{}", line_number, line_number);
+    println!("location: {:?}", location);
     let output = Command::new("git")
                          .args(["blame", "-L", &format!("{},{}", line_number, line_number), "--", file_path])
                          .output();

@@ -27,7 +27,7 @@ pub fn is_to_do(line: &str) -> bool {
 
 // TODO bug: this function is not implemented; Assigned OthelloEngineer.
 // TODO feature: implement this function; Assigned OthelloEngineer.
-pub fn parse_to_do_line(submission: Submission) -> Result<ToDo, String> {
+pub fn parse_submission(submission: Submission) -> Result<ToDo, String> {
     let lower_line = submission.line.to_lowercase();
     let original_words: Vec<&str> = submission.line.split_whitespace().collect();
     let words: Vec<&str> = lower_line.split_whitespace().collect();
@@ -116,7 +116,7 @@ mod tests {
             issuer: String::from("OthelloEngineer"),
             date: String::from("2021-09-01"),
         };
-        let to_do = parse_to_do_line(submission).unwrap();
+        let to_do = parse_submission(submission).unwrap();
         assert_eq!(to_do.description, "implement this function");
         assert_eq!(to_do.assigned, None);
         assert_eq!(to_do.issue_type, IssueType::Bug);
@@ -131,7 +131,7 @@ mod tests {
             issuer: String::from("OthelloEngineer"),
             date: String::from("2021-09-01"),
         };
-        let to_do = parse_to_do_line(submission).unwrap();
+        let to_do = parse_submission(submission).unwrap();
         assert_eq!(to_do.description, "implement this function");
         assert_eq!(to_do.assigned, Some(String::from("OthelloEngineer")));
         assert_eq!(to_do.issue_type, IssueType::Feature);
@@ -146,7 +146,7 @@ mod tests {
             issuer: String::from("OthelloEngineer"),
             date: String::from("2021-09-01"),
         };
-        let to_do = parse_to_do_line(submission).unwrap();
+        let to_do = parse_submission(submission).unwrap();
         assert_eq!(to_do.description, "implement this function; now");
         assert_eq!(to_do.assigned, Some(String::from("OthelloEngineer")));
         assert_eq!(to_do.issue_type, IssueType::Feature);

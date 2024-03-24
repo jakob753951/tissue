@@ -31,7 +31,7 @@ fn read_comments_from_file(file_path: &str) -> Result<FileLines, String> {
         .lines()
         .enumerate()
         .filter(|line| is_comment(line.1))
-        .map(|line| (line.0, line.1.to_string()))
+        .map(|line| (line.0+1, line.1.to_string()))
         .collect();
     Ok(FileLines {
         file_path: file_path.to_string(),
