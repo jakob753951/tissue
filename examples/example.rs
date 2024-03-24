@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 //TODO bug: this function breaks when input contains punctuation marks; assigned OthelloEngineer
 //TODO feature: please have this accept nordic letters rust
 fn process_text(input: &str) -> HashMap<String, usize> {
