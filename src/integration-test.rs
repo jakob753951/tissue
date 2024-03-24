@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use crate::{filereader, todofinder::Submission};
+    use crate::{filereader, githandler, todofinder::Submission};
 
     use super::*;
     use std::fs;
@@ -13,12 +13,16 @@ mod tests {
         let submissions : Vec<Submission> = Vec::new();
         for file in files {
             for line in file.lines {
+                let issuer = githandler::blame_user_from_line(&file.file_path, line.0).unwrap();
                 let submission = Submission {
-                    file_path: file.file_path.clone(),
                     line_number: line.0,
-                    line: line.1.clone(),
+                    line: line.1,
+                    file_path: file.file_path.clone(),
+                    issuer: issuer.user,
+                    //2024-03-24 02:45:51 +0100
+                    //YYYY-MM-DD HH:MM:SS +0000 offset
+                    date: issuer.date,
                 };
-                submissions.push(submission);
             }
         }
         
