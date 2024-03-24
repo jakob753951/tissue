@@ -1,3 +1,6 @@
+use std::str::FromStr;
+use regex::RegexBuilder;
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum IssueType {
     Bug,
@@ -5,6 +8,20 @@ pub enum IssueType {
     Improvement,
     Other,
 }
+
+impl FromStr for IssueType {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Ok(match s {
+            "bug" => IssueType::Bug,
+            "feature" => IssueType::Feature,
+            "improvement" => IssueType::Improvement,
+            _ => IssueType::Other,
+        })
+    }
+}
+
 pub struct ToDo {
     pub submission: Submission,
     pub description: String,
@@ -28,59 +45,39 @@ pub fn is_to_do(line: &str) -> bool {
 // TODO bug: this function is not implemented; Assigned OthelloEngineer.
 // TODO feature: implement this function; Assigned OthelloEngineer.
 pub fn parse_submission(submission: Submission) -> Result<ToDo, String> {
-    let lower_line = submission.line.to_lowercase();
-    let original_words: Vec<&str> = submission.line.split_whitespace().collect();
-    let words: Vec<&str> = lower_line.split_whitespace().collect();
-    let issue_type = find_issue_type(words[1])?;
-    let mut assigned = None;
-    let mut description = String::from("");
-
-    let mut description_finished = false;
-    let next_word = 3;
-    for (i, word) in words[2..].iter().enumerate() {
-        if description_finished {
-            // To allow ; in description. If description is finished, then the rest word must be assigned.
-            assigned = Some(original_words[i + next_word..].join(" "));
-            break;
-        }
-        
-        if word.ends_with(";") && words[i + 3].eq("assigned"){
-            description_finished = true;
-            let no_semicolon_word = word.trim_end_matches(";");
-            description.push_str(format!("{}", no_semicolon_word).as_str());
-            continue;
-        }
-        description.push_str(format!("{} ", word).as_str());
-    }
-
-    if description.is_empty() {
-        return Err(format!(
-            "No description found after {} {} at line nr. {} in {} \n comment: '{}'",
-            words[0], words[1], submission.line_number, submission.file_path, submission.line
-        ));
-    }
-
+    let re = RegexBuilder::new(r"
+    \s*                                 # \s means whitespace and * is any amount of
+    todo\s+(?<type>\w+):                # matches 'todo bug:'
+    \s*
+    (                                   # needed to make OR operator work properly
+        (?<description_no_assigned>.+)
+        |                               # OR operator
+        (?<description>.+)
+        ;
+        \s*
+        assigned                        # literal 'assigned'
+        \s+                             # a non-zero amount of whitespace (must be space between assigned literal and the user)
+        (?<assigned>[a-zA-Z0-9_-]+)     # the username should be alphanumeric plus underscores and dashes
+        .*
+    )
+    ")
+        .case_insensitive(true)
+        .ignore_whitespace(true)
+        .build().unwrap();
+    let binding = submission.clone();
+    let Some(caps) = re.captures(binding.line.as_str()) else {
+        return Err("Pattern not found".to_string())
+    };
     Ok(ToDo {
-        submission: submission,
-        description: description.trim().to_string(),
-        assigned: assigned,
-        issue_type: issue_type,
+        submission,
+        description: caps.name("description")
+            .map(|m| m.as_str().to_string())
+            .or(caps.name("description_no_assigned")
+                    .map(|m| m.as_str().to_string()))
+            .unwrap(),
+        assigned: caps.name("assigned").map(|s| s.as_str().to_string()),
+        issue_type: (&caps["type"]).parse()?,
     })
-}
-
-fn find_issue_type(line: &str) -> Result<IssueType, String> {
-    if !line.ends_with(":") {
-        return Err(format!(
-            "Cannot confirm issue type. Does not end with ':'. Found issue type {}",
-            line
-        ));
-    }
-    match line {
-        "bug:" => Ok(IssueType::Bug),
-        "feature:" => Ok(IssueType::Feature),
-        "improvement:" => Ok(IssueType::Improvement),
-        _ => Ok(IssueType::Other),
-    }
 }
 
 #[cfg(test)]
@@ -96,15 +93,11 @@ mod tests {
     }
 
     #[test]
-    fn test_find_issue_type() {
-        assert_eq!(find_issue_type("bug:"), Ok(IssueType::Bug));
-        assert_eq!(find_issue_type("feature:"), Ok(IssueType::Feature));
-        assert_eq!(find_issue_type("improvement:"), Ok(IssueType::Improvement));
-        assert_eq!(find_issue_type("other:"), Ok(IssueType::Other));
-        assert_eq!(
-            find_issue_type("other"),
-            Err("Cannot confirm issue type. Does not end with ':'. Found issue type other".to_string())
-        );
+    fn test_parse_issue_type() {
+        assert_eq!("bug".parse::<IssueType>(), Ok(IssueType::Bug));
+        assert_eq!("feature".parse::<IssueType>(), Ok(IssueType::Feature));
+        assert_eq!("improvement".parse::<IssueType>(), Ok(IssueType::Improvement));
+        assert_eq!("other".parse::<IssueType>(), Ok(IssueType::Other));
     }
 
     #[test]
@@ -150,5 +143,5 @@ mod tests {
         assert_eq!(to_do.description, "implement this function; now");
         assert_eq!(to_do.assigned, Some(String::from("OthelloEngineer")));
         assert_eq!(to_do.issue_type, IssueType::Feature);
-    }   
+    }
 }
